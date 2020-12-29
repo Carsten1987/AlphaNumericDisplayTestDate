@@ -52,5 +52,5 @@ static const uint8_t date_segment_coding[] =
 
 uint8_t get_date_data(uint8_t date_segment)
 {
-  return date_segment_coding[date_segment];
+  return date_segment_coding[8 - date_segment];
 }
