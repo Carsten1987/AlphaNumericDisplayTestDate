@@ -1,113 +1,108 @@
+# MIT License
+# 
+# Copyright (c) 2021 Carsten1987
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-#  There exist several targets which are by default empty and which can be 
-#  used for execution of your targets. These targets are usually executed 
-#  before and after some main targets. They are: 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
 #
-#     .build-pre:              called before 'build' target
-#     .build-post:             called after 'build' target
-#     .clean-pre:              called before 'clean' target
-#     .clean-post:             called after 'clean' target
-#     .clobber-pre:            called before 'clobber' target
-#     .clobber-post:           called after 'clobber' target
-#     .all-pre:                called before 'all' target
-#     .all-post:               called after 'all' target
-#     .help-pre:               called before 'help' target
-#     .help-post:              called after 'help' target
-#
-#  Targets beginning with '.' are not intended to be called on their own.
-#
-#  Main targets can be executed directly, and they are:
-#  
-#     build                    build a specific configuration
-#     clean                    remove built files from a configuration
-#     clobber                  remove all built files
-#     all                      build all configurations
-#     help                     print help mesage
-#  
-#  Targets .build-impl, .clean-impl, .clobber-impl, .all-impl, and
-#  .help-impl are implemented in nbproject/makefile-impl.mk.
-#
-#  Available make variables:
-#
-#     CND_BASEDIR                base directory for relative paths
-#     CND_DISTDIR                default top distribution directory (build artifacts)
-#     CND_BUILDDIR               default top build directory (object files, ...)
-#     CONF                       name of current configuration
-#     CND_ARTIFACT_DIR_${CONF}   directory of build artifact (current configuration)
-#     CND_ARTIFACT_NAME_${CONF}  name of build artifact (current configuration)
-#     CND_ARTIFACT_PATH_${CONF}  path to build artifact (current configuration)
-#     CND_PACKAGE_DIR_${CONF}    directory of package (current configuration)
-#     CND_PACKAGE_NAME_${CONF}   name of package (current configuration)
-#     CND_PACKAGE_PATH_${CONF}   path to package (current configuration)
-#
-# NOCDDL
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
+# Environment
+ifeq ($(OS),Windows_NT)
+	MKDIR=gnumkdir -p
+else
+	MKDIR=mkdir -p
+endif
+RM=rm -f 
+MV=mv 
+CP=cp 
 
-# Environment 
-MKDIR=mkdir
-CP=cp
-CCADMIN=CCadmin
-RANLIB=ranlib
+MP_CC=xc8-cc
 
+NAME := DisplayTest
+OUT_DIR := Output
 
-# build
-build: .build-post
+CPU := 16F73
 
-.build-pre:
-# Add your pre 'build' code here...
+DIRS := .
 
-.build-post: .build-impl
-# Add your post 'build' code here...
+INC :=
 
+CFLAGS += -O0
+CFLAGS := -mcpu=$(CPU)
+CFLAGS += -c
+#CFLAGS += -D__DEBUG=1
+CFLAGS += -fno-short-double
+CFLAGS += -fno-short-float 
+CFLAGS += -fasmfile
+CFLAGS += -maddrqual=ignore 
+CFLAGS += -xassembler-with-cpp 
+CFLAGS += -mwarn=-3 
+CFLAGS += -Wa,-a 
+CFLAGS += -Wl,--data-init 
+CFLAGS += -mc90lib
+CFLAGS += -std=c99 
+CFLAGS += -mstack=compiled:auto:auto
 
-# clean
-clean: .clean-post
+LINKFLAGS := -mcpu=$(CPU) 
+LINKFLAGS += -O0 
+LINKFLAGS += -fno-short-double 
+LINKFLAGS += -fno-short-float 
+LINKFLAGS += -fasmfile 
+LINKFLAGS += -maddrqual=ignore 
+LINKFLAGS += -xassembler-with-cpp 
+LINKFLAGS += -mwarn=-3 
+LINKFLAGS += -Wa,-a 
+LINKFLAGS += -msummary=-psect,-class,+mem,-hex,-file  
+LINKFLAGS += -ginhx032 
+LINKFLAGS += -Wl,--data-init 
+LINKFLAGS += -mkeep-startup 
+LINKFLAGS += -mno-osccal 
+LINKFLAGS += -mresetbits 
+LINKFLAGS += -msave-resetbits 
+LINKFLAGS += -mno-download 
+LINKFLAGS += -mno-stackcall 
+LINKFLAGS += -mc90lib 
+LINKFLAGS += -std=c99 
+LINKFLAGS += -mstack=compiled:auto:auto
 
-.clean-pre:
-# Add your pre 'clean' code here...
-# WARNING: the IDE does not call this target since it takes a long time to
-# simply run make. Instead, the IDE removes the configuration directories
-# under build and dist directly without calling make.
-# This target is left here so people can do a clean when running a clean
-# outside the IDE.
+FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c))
+OUTS := $(patsubst %.c, %.p1, $(FILES))
+OUTS := $(addprefix $(OUT_DIR)/, $(OUTS))
+DEPS := $(patsubst %.p1, %.d, $(OUTS))
 
-.clean-post: .clean-impl
-# Add your post 'clean' code here...
+test:
+	@echo FILES: $(FILES)
+	@echo DIRS: $(OUTS)
+	@echo DEPS: $(DEPS)
 
+all: $(OUT_DIR)/$(NAME).hex
+	@echo finished
 
-# clobber
-clobber: .clobber-post
+$(OUT_DIR)/$(NAME).hex: $(OUTS)
+	@echo linking ... 
+	@${MP_CC} $(LINKFLAGS) -Wl,-Map=$(OUT_DIR)/$(NAME).map -o $(OUT_DIR)/$(NAME).hex $(OUTS)
 
-.clobber-pre:
-# Add your pre 'clobber' code here...
+-include $(DEPS)
 
-.clobber-post: .clobber-impl
-# Add your post 'clobber' code here...
+$(OUT_DIR)/%.p1: %.c Makefile
+	@$(MKDIR) $(dir $@)
+	@echo compiling $< ...
+	@$(MP_CC) $(INC) $(CFLAGS) -o $@ $<
 
-
-# all
-all: .all-post
-
-.all-pre:
-# Add your pre 'all' code here...
-
-.all-post: .all-impl
-# Add your post 'all' code here...
-
-
-# help
-help: .help-post
-
-.help-pre:
-# Add your pre 'help' code here...
-
-.help-post: .help-impl
-# Add your post 'help' code here...
-
-
-
-# include project implementation makefile
-include nbproject/Makefile-impl.mk
-
-# include project make variables
-include nbproject/Makefile-variables.mk
+.PHONY: clean
+clean:
+	rm -rf $(OUT_DIR)
